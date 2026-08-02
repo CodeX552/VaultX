@@ -1,0 +1,24 @@
+node_modules
+dist
+build
+.env
+.env.*
+!.env.example
+coverage
+*.log
+backend/node_modules
+backend/dist
+frontend/node_modules
+frontend/dist
+frontend/.vite
+backend/.turbo
+frontend/.turbo
+backend/prisma/dev.db
+
+# Documents and Guides
+*.md
+!README.md
+
+# Test Scripts
+backend/test-api.ts
+backend/test-db.ts
