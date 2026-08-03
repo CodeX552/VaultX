@@ -27,6 +27,8 @@ export interface DashboardStats {
   categoryStatistics: Record<string, number>;
 }
 
+
+
 export interface VaultHistoryEntry {
   id: string;
   createdAt: string;
@@ -35,10 +37,32 @@ export interface VaultHistoryEntry {
 
 export interface AuditLogEntry {
   id: string;
+  userId: string | null;
   action: string;
   entity: string;
   entityId: string | null;
-  metadata: unknown;
+  metadata: any | null;
+  ip: string | null;
+  userAgent: string | null;
+  browser: string | null;
+  os: string | null;
+  country: string | null;
+  riskScore: number | null;
   createdAt: string;
 }
 
+export interface SecurityAlert {
+  id: string;
+  userId: string | null;
+  attackType: string;
+  mitreId: string;
+  severity: string;
+  ip: string | null;
+  payload: string | null;
+  url: string | null;
+  method: string | null;
+  headers: any | null;
+  resolved: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

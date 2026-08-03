@@ -6,6 +6,12 @@ export function createAuditLog(data: {
   entity: string;
   entityId?: string | null;
   metadata?: unknown;
+  ip?: string | null;
+  userAgent?: string | null;
+  browser?: string | null;
+  os?: string | null;
+  country?: string | null;
+  riskScore?: number | null;
 }) {
   // Har security-relevant action ka audit trail yahan store hota hai.
   return prisma.auditLog.create({
@@ -14,7 +20,13 @@ export function createAuditLog(data: {
       action: data.action,
       entity: data.entity,
       entityId: data.entityId ?? null,
-      metadata: data.metadata as never
+      metadata: data.metadata as never,
+      ip: data.ip,
+      userAgent: data.userAgent,
+      browser: data.browser,
+      os: data.os,
+      country: data.country,
+      riskScore: data.riskScore
     }
   });
 }

@@ -6,6 +6,12 @@ export function recordAuditEvent(data: {
   entity: string;
   entityId?: string | null;
   metadata?: unknown;
+  ip?: string | null;
+  userAgent?: string | null;
+  browser?: string | null;
+  os?: string | null;
+  country?: string | null;
+  riskScore?: number | null;
 }) {
   // Audit event ek central place par persist hota hai.
   return createAuditLog(data);

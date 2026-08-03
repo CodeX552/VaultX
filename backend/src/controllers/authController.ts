@@ -34,7 +34,12 @@ export async function register(request: Request, response: Response): Promise<vo
     throw new AppError('Validation failed', 400);
   }
 
-  const result = await registerUser(parsed.data);
+  const telemetry = {
+    ip: request.ip || request.socket.remoteAddress || '127.0.0.1',
+    userAgent: request.headers['user-agent'] || 'Unknown'
+  };
+
+  const result = await registerUser(parsed.data, telemetry);
   return respondWithAuth(response, result.user, result.tokens.accessToken, result.tokens.refreshToken);
 }
 
@@ -46,7 +51,12 @@ export async function login(request: Request, response: Response) {
     throw new AppError('Validation failed', 400);
   }
 
-  const result = await loginUser(parsed.data);
+  const telemetry = {
+    ip: request.ip || request.socket.remoteAddress || '127.0.0.1',
+    userAgent: request.headers['user-agent'] || 'Unknown'
+  };
+
+  const result = await loginUser(parsed.data, telemetry);
   return respondWithAuth(response, result.user, result.tokens.accessToken, result.tokens.refreshToken);
 }
 

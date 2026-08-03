@@ -19,6 +19,12 @@ export function AppLayout() {
                 <Link to="/dashboard" className="transition hover:text-white">
                   Dashboard
                 </Link>
+                <Link to="/sessions" className="transition hover:text-white">
+                  Sessions
+                </Link>
+                <Link to="/threats" className="transition hover:text-red-400 text-red-500 font-semibold">
+                  Threats
+                </Link>
                 <button onClick={logout} className="rounded-full bg-white/5 px-4 py-2 font-medium text-white transition hover:bg-white/10">
                   Logout
                 </button>

@@ -1,167 +1,121 @@
-# VaultX - Secure Password Manager
+# VaultX - AI-Powered Cyber Threat Intelligence Platform
 
-VaultX is a production-style secure password manager built with React, Vite, TypeScript, Tailwind CSS, Node.js, Express, PostgreSQL, and Prisma. It focuses on security-first credential storage with AES-256-GCM encryption, JWT-based authentication, protected routes, audit logging, password history, and master-password recovery flows.
+VaultX started as a production-style secure password manager and has evolved into an **Enterprise Cyber Threat Intelligence Platform & Active Deception Framework (Honeypot)**. It combines military-grade credential storage (AES-256-GCM) with advanced SOC capabilities including Threat Detection, a Web Application Firewall (WAF), MITRE ATT&CK mapping, SIEM integration, and an AI Security Assistant.
 
 ## Features
 
-- User registration, login, logout, refresh token flow
-- Forgot password and reset password flow
-- Change master password
-- Encrypted password vault with AES-256-GCM
-- Random IV and authentication tag storage
-- Password reveal only on demand
-- Search and category filtering
-- Dashboard statistics and recent activity
-- Password history tracking
-- Audit logs for key account and vault events
-- Strong password generator with strength and entropy feedback
-- Responsive dark UI with polished dashboard cards and modal flows
+### 🛡️ Enterprise Security Operations (SOC)
+- **Web Application Firewall (WAF)**: Deep packet inspection of API requests to block SQL Injection (SQLi), Cross-Site Scripting (XSS), Command Injection, and Path Traversal.
+- **Active Deception (Honeypots)**: Fake endpoints (e.g., `/phpmyadmin`, `/.git/config`) designed to attract, log, and block automated scanners and human attackers.
+- **MITRE ATT&CK Mapping**: Every intercepted attack is classified and mapped to standardized MITRE techniques (e.g., T1190, T1078).
+- **Threat Hunting Dashboard**: A dedicated interface for security analysts to investigate intercepted attacks, view attacker IPs, and analyze targeted endpoints.
+- **AI Security Assistant**: Simulates sending malicious payloads to an LLM for automated security analysis, confidence scoring, and remediation recommendations.
+- **SIEM Export**: One-click JSON export of threat intelligence data formatted for ingestion into external tools like Splunk, Elastic, or Wazuh.
+
+### 🔒 Secure Password Management & Identity
+- **AES-256-GCM Encryption**: Credentials are encrypted at rest with randomly generated Initialization Vectors (IV) and Authentication Tags to prevent tampering.
+- **Advanced Audit Logging**: Comprehensive telemetry tracking IP addresses, device types, geographical locations, and a dynamically calculated Risk Score for every login attempt.
+- **Session Management**: Revoke active sessions across devices and monitor connection history.
+- **Password History & Strength**: Track previous passwords, enforce complexity, and calculate entropy.
+- **Data Portability**: Import and export vault data via CSV.
 
 ## Tech Stack
 
-- Frontend: React, Vite, TypeScript, Tailwind CSS, React Router, React Hook Form, Zod, Axios, Hero Icons
-- Backend: Node.js, Express.js, TypeScript, Winston, Helmet, CORS, Compression, Morgan, Rate Limiting
-- Database: PostgreSQL, Prisma ORM
-- Security: bcrypt, JWT, AES-256-GCM, validation with Zod
+- **Frontend**: React, Vite, TypeScript, Tailwind CSS, React Router, Recharts, Hero Icons
+- **Backend**: Node.js, Express.js, TypeScript, Winston, Helmet, CORS, Rate Limiting
+- **Database**: PostgreSQL (Neon), Prisma ORM
+- **Security**: bcrypt, JWT, AES-256-GCM, Zod Validation
 
-## Folder Structure
+## Directory Structure
 
 ```text
-backend/
-  prisma/
-  src/
-    config/
-    controllers/
-    crypto/
-    database/
-    middleware/
-    repositories/
-    routes/
-    services/
-    types/
-    utils/
-    validators/
-
-frontend/
-  src/
-    components/
-    hooks/
-    layouts/
-    pages/
-    services/
-    types/
-    utils/
+VaultX/
+├── backend/                  # Node.js / Express backend
+│   ├── prisma/               # Database schema and migrations
+│   └── src/
+│       ├── config/           # Environment variables and configurations
+│       ├── controllers/      # API Route Handlers
+│       ├── crypto/           # AES-256-GCM Cryptography module
+│       ├── middleware/       # WAF, Auth, and Rate Limiting
+│       ├── routes/           # Honeypots, Threats, Auth, Vault
+│       └── services/         # Threat Intel, Risk Engine, AI Assistant
+├── frontend/                 # React / Vite frontend
+│   └── src/
+│       ├── components/       # UI Components (Incident Timeline, Modals)
+│       ├── pages/            # ThreatDashboard, Sessions, Vault
+│       └── services/         # API Integration layer
+├── package.json              # Monorepo configuration
+├── README.md                 # Project Documentation
+└── ARCHITECTURE.md           # Deep dive into Threat Intel architecture
 ```
 
 ## Installation
 
 1. Install dependencies:
-
 ```bash
 npm install
 ```
 
-2. Generate Prisma client:
-
+2. Generate Prisma client & Push Database Schema:
 ```bash
 npm run prisma:generate --workspace backend
-```
-
-3. Run database migration:
-
-```bash
-npm run prisma:migrate --workspace backend
+npx prisma db push --schema=./backend/prisma/schema.prisma
 ```
 
 ## Environment Variables
 
-Backend `.env`:
+To deploy this project or run it locally, create `.env` files in their respective directories.
 
+**Backend (`backend/.env`)**:
 ```bash
 NODE_ENV=development
-PORT=4000
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/vaultx?schema=public"
+PORT=5000
+DATABASE_URL="postgresql://user:password@hostname/vaultx?schema=public"
 JWT_ACCESS_SECRET="replace-with-a-long-random-access-secret-32-chars-min"
 JWT_REFRESH_SECRET="replace-with-a-long-random-refresh-secret-32-chars-min"
 ENCRYPTION_KEY="0000000000000000000000000000000000000000000000000000000000000000"
 CLIENT_URL="http://localhost:5173"
 BCRYPT_SALT_ROUNDS=12
 ```
+> **CRITICAL:** The `ENCRYPTION_KEY` must be exactly 32 bytes (64 hex characters or 32 standard characters). If lost, your vault is unrecoverable.
 
-Frontend `.env`:
-
+**Frontend (`frontend/.env`)**:
 ```bash
-VITE_API_BASE_URL="http://localhost:4000/api"
+VITE_API_BASE_URL="http://localhost:5000/api"
 ```
 
 ## Running the Project
 
-Run both apps through the workspace scripts:
-
+Run both frontend and backend concurrently from the root directory:
 ```bash
 npm run dev
 ```
 
-Or run them separately:
-
-```bash
-npm run dev:backend
-npm run dev:frontend
-```
-
-Build both apps:
-
+Build the project for production:
 ```bash
 npm run build
 ```
 
 ## API Documentation
 
-### Auth
+### Cyber Threat Intelligence
+- `GET /api/threats` - Fetch all security alerts, anomalies, and stats.
+- `POST /api/threats/:id/resolve` - Mark a threat as resolved.
+- `GET /api/threats/:ip/timeline` - Get interleaved audit logs and security alerts for an IP.
+- `POST /api/threats/:id/analyze` - Trigger the AI Security Assistant on a specific payload.
+- `GET /api/threats/export/siem` - Download raw threat JSON for SIEM ingestion.
 
-- `POST /register`
-- `POST /login`
-- `POST /refresh`
-- `POST /logout`
-- `POST /forgot-password`
-- `POST /reset-password`
-- `PUT /change-password`
+### Active Deception (Honeypots)
+- `POST /admin/login`, `GET /phpmyadmin`, `GET /.git/config`, etc. (Mounted at root)
 
-### Vault
-
-- `GET /vault`
-- `POST /vault`
-- `PUT /vault/:id`
-- `DELETE /vault/:id`
-- `GET /vault/:id/password`
-- `GET /vault/:id/history`
-
-### Dashboard and Activity
-
-- `GET /dashboard`
-- `GET /audit-logs`
-
-## Security Features
-
-- Password hashing with bcrypt for master passwords
-- AES-256-GCM encryption for vault passwords
-- Random IV and authentication tag storage
-- JWT access and refresh tokens
-- HTTP-only refresh token cookie
-- Helmet, CORS, compression, Morgan, and rate limiting
-- Centralized error handling
-- Zod validation for every request layer
-- Audit logging for authentication and vault actions
-
-## Screenshots Placeholder
-
-Add screenshots here for the landing page, login flow, dashboard, vault modal, and recovery workflows.
+### User & Session Management
+- `GET /api/sessions` - List active sessions and device telemetry.
+- `DELETE /api/sessions/:id` - Revoke a specific session.
+- `GET /api/dashboard/audit-logs` - View enriched account activity logs.
 
 ## Future Improvements
 
-- TOTP-based two-factor authentication
-- CSV import and export
-- Encrypted backup downloads
-- Breach checking integration
-- Better token rotation and device session management
-- Email delivery for reset workflows
+- Automated IP ban management via IPTables or Cloudflare integration.
+- Full LLM API integration (OpenAI/Anthropic) for dynamic threat analysis.
+- TOTP-based Two-Factor Authentication.
+- Dark Web Breach checking integration for stored vault passwords.

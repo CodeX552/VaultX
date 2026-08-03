@@ -218,8 +218,24 @@ export function DashboardPage() {
             <div className="mt-4 space-y-3">
               {auditLogs.length ? auditLogs.map((log) => (
                 <div key={log.id} className="rounded-2xl border border-white/10 bg-slate-900/40 px-4 py-3">
-                  <p className="font-medium text-white">{log.action}</p>
-                  <p className="text-sm text-slate-400">{log.entity} {log.entityId ? `#${log.entityId}` : ''}</p>
+                  <div className="flex justify-between items-start">
+                    <p className="font-medium text-white">{log.action}</p>
+                    {log.riskScore !== null && log.riskScore !== undefined && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${log.riskScore >= 80 ? 'bg-red-500/20 text-red-400' : log.riskScore >= 40 ? 'bg-orange-500/20 text-orange-400' : 'bg-green-500/20 text-green-400'}`}>
+                        Risk: {log.riskScore}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-400 mt-1">{log.entity} {log.entityId ? `#${log.entityId}` : ''}</p>
+                  
+                  {log.ip && (
+                    <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
+                      <span>{log.ip}</span>
+                      {log.country && <span>• {log.country}</span>}
+                      {log.browser && <span>• {log.browser} on {log.os}</span>}
+                    </div>
+                  )}
+                  <p className="text-xs text-slate-600 mt-1">{new Date(log.createdAt).toLocaleString()}</p>
                 </div>
               )) : (
                 <p className="text-slate-400">No activity yet.</p>

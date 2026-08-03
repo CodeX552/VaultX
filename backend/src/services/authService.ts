@@ -8,6 +8,7 @@ import { createPasswordResetToken, findPasswordResetTokenByHash, markPasswordRes
 import { createTokenPair, generateOpaqueToken, hashToken, verifyRefreshToken } from '../utils/token';
 import { recordAuditEvent } from './auditService';
 import { prisma } from '../database/prisma';
+import { analyzeLoginRisk, TelemetryData } from './riskService';
 import type { AuthUser, TokenPair } from '../types/auth';
 
 // DB user record ko frontend-safe auth user shape me convert karta hai.
@@ -28,21 +29,27 @@ function toAuthUser(user: {
 }
 
 // Refresh token ko verify karke uska hash aur expiry DB me store karte hain.
-function persistRefreshToken(userId: string, refreshToken: string) {
+function persistRefreshToken(userId: string, refreshToken: string, telemetry?: TelemetryData, riskResult?: any) {
   const decoded = verifyRefreshToken(refreshToken);
 
   if (typeof decoded.exp !== 'number') {
     throw new AppError('Refresh token is missing an expiry claim', 400);
   }
 
-  return createRefreshToken({
-    userId,
-    tokenHash: hashToken(refreshToken),
-    expiresAt: new Date(decoded.exp * 1000)
+  return prisma.refreshToken.create({
+    data: {
+      userId,
+      tokenHash: hashToken(refreshToken),
+      expiresAt: new Date(decoded.exp * 1000),
+      ip: telemetry?.ip,
+      browser: riskResult?.browser,
+      os: riskResult?.os,
+      country: riskResult?.country
+    }
   });
 }
 
-export async function registerUser(input: { name: string; email: string; password: string }) {
+export async function registerUser(input: { name: string; email: string; password: string }, telemetry?: TelemetryData) {
   // Same email pe duplicate account allow nahi hai.
   const existingUser = await findUserByEmail(input.email.toLowerCase());
 
@@ -58,10 +65,19 @@ export async function registerUser(input: { name: string; email: string; passwor
     passwordHash
   });
 
+  let riskResult;
+  if (telemetry) {
+    telemetry.userId = user.id;
+    riskResult = await analyzeLoginRisk(telemetry);
+  }
+
   // Login ke liye access token aur refresh token dono create karte hain.
   const tokens = createTokenPair({ id: user.id, email: user.email });
-  await persistRefreshToken(user.id, tokens.refreshToken);
-  await recordAuditEvent({ userId: user.id, action: 'AUTH_REGISTER', entity: 'user', entityId: user.id, metadata: { email: user.email } });
+  await persistRefreshToken(user.id, tokens.refreshToken, telemetry, riskResult);
+  await recordAuditEvent({ 
+    userId: user.id, action: 'AUTH_REGISTER', entity: 'user', entityId: user.id, metadata: { email: user.email },
+    ip: telemetry?.ip, userAgent: telemetry?.userAgent, browser: riskResult?.browser, os: riskResult?.os, country: riskResult?.country, riskScore: riskResult?.score
+  });
 
   return {
     user: toAuthUser(user),
@@ -69,7 +85,7 @@ export async function registerUser(input: { name: string; email: string; passwor
   };
 }
 
-export async function loginUser(input: { email: string; password: string }) {
+export async function loginUser(input: { email: string; password: string }, telemetry?: TelemetryData) {
   // Email se user dhoondh ke password verify karte hain.
   const user = await findUserByEmail(input.email.toLowerCase());
 
@@ -83,12 +99,31 @@ export async function loginUser(input: { email: string; password: string }) {
     throw new AppError('Invalid email or password', 401);
   }
 
+  let riskResult;
+  if (telemetry) {
+    telemetry.userId = user.id;
+    riskResult = await analyzeLoginRisk(telemetry);
+    
+    // Optionally block extremely high risk
+    if (riskResult.isHighRisk) {
+      await recordAuditEvent({ 
+        userId: user.id, action: 'AUTH_LOGIN_BLOCKED_RISK', entity: 'user', entityId: user.id, metadata: { factors: riskResult.factors },
+        ip: telemetry.ip, userAgent: telemetry.userAgent, browser: riskResult.browser, os: riskResult.os, country: riskResult.country, riskScore: riskResult.score
+      });
+      // throw new AppError('Login blocked due to suspicious activity. Please verify your identity.', 403);
+      // For now, we only alert and let them through, but this demonstrates the capability.
+    }
+  }
+
   // Purane refresh tokens invalidate kar rahe hain.
   await revokeUserRefreshTokens(user.id);
 
   const tokens = createTokenPair({ id: user.id, email: user.email });
-  await persistRefreshToken(user.id, tokens.refreshToken);
-  await recordAuditEvent({ userId: user.id, action: 'AUTH_LOGIN', entity: 'user', entityId: user.id });
+  await persistRefreshToken(user.id, tokens.refreshToken, telemetry, riskResult);
+  await recordAuditEvent({ 
+    userId: user.id, action: 'AUTH_LOGIN', entity: 'user', entityId: user.id, metadata: { factors: riskResult?.factors },
+    ip: telemetry?.ip, userAgent: telemetry?.userAgent, browser: riskResult?.browser, os: riskResult?.os, country: riskResult?.country, riskScore: riskResult?.score
+  });
 
   return {
     user: toAuthUser(user),

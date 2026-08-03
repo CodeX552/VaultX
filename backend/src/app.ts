@@ -6,7 +6,9 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import routes from './routes';
+import honeypotRoutes from './routes/honeypotRoutes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { wafMiddleware } from './middleware/wafMiddleware';
 import { env } from './config/env';
 
 export function createApp() {
@@ -44,6 +46,12 @@ export function createApp() {
   app.get('/api', (_request, response) => {
     response.json({ success: true, message: 'VaultX API ready' });
   });
+
+  // Honeypot endpoints placed before other routes to catch scanners
+  app.use(honeypotRoutes);
+
+  // WAF (Web Application Firewall) intercepts all feature routes
+  app.use('/api', wafMiddleware);
 
   // Sare feature routes /api ke under mount kiye gaye hain.
   app.use('/api', routes);
