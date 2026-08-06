@@ -13,7 +13,6 @@ frontend/dist
 frontend/.vite
 backend/.turbo
 frontend/.turbo
-backend/prisma/dev.db
 
 # Documents and Guides
 *.md
@@ -22,3 +21,18 @@ backend/prisma/dev.db
 # Test Scripts
 backend/test-api.ts
 backend/test-db.ts
+backend/test-endpoints.js
+backend/test-*.ts
+backend/test-*.js
+
+# Prisma Database File
+backend/prisma/*.db
+backend/prisma/*.db-journal
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo

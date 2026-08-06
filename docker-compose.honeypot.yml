@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  cowrie:
+    image: cowrie/cowrie:latest
+    container_name: vaultx_cowrie_honeypot
+    ports:
+      - "2222:2222" # SSH honeypot port
+      - "2223:2223" # Telnet honeypot port
+    volumes:
+      - ./honeypot_data/cowrie-var:/cowrie/cowrie-git/var
+      - ./honeypot_data/cowrie-etc:/cowrie/cowrie-git/etc
+    environment:
+      - COWRIE_TELNET_ENABLED=yes
+      # In a real environment, you'd forward port 22 to 2222 using iptables
+      # and configure Cowrie's output plugins (Elasticsearch, Splunk, or JSON)
+      # to ingest logs directly into the VaultX backend via an API agent.
+    restart: always
+
+  # You could also add other honeypots here like OpenCanary
+  # opencanary:
+  #   image: thinkst/opencanary
+  #   ports:
+  #     - "21:21" # FTP
+  #     - "80:80" # HTTP
+  #     - "443:443" # HTTPS

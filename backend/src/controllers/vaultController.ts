@@ -2,6 +2,7 @@ import { type Request, type Response } from 'express';
 import { AppError } from '../middleware/errorHandler';
 import { createVaultSchema, vaultIdParamsSchema, vaultQuerySchema, updateVaultSchema } from '../validators/vaultValidators';
 import { createVault, exportVaultCsv, getVaultPassword, getVaultPasswordHistory, importVaultCsv, listVault, removeVault, updateVault } from '../services/vaultService';
+import { checkPasswordStrength } from '../services/passwordIntelService';
 
 function requireUserId(request: Request) {
   // Har protected vault action se pehle user context chahiye hota hai.
@@ -112,3 +113,16 @@ export async function importVault(request: Request, response: Response): Promise
   const result = await importVaultCsv(userId, payload.csv);
   response.status(201).json({ success: true, data: result });
 }
+
+export async function checkPasswordIntelligence(request: Request, response: Response): Promise<void> {
+  requireUserId(request); // Just ensure authenticated
+  const { password } = request.body;
+
+  if (!password || typeof password !== 'string') {
+    throw new AppError('Password string is required in request body', 400);
+  }
+
+  const result = await checkPasswordStrength(password);
+  response.status(200).json({ success: true, data: result });
+}
+

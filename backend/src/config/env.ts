@@ -7,13 +7,16 @@ dotenv.config();
 const envSchema = z.object({
   // Environment values ko strict schema se verify kar rahe hain.
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().int().positive().default(4000),
+  PORT: z.coerce.number().int().positive().default(5000),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
   JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
   ENCRYPTION_KEY: z.string().min(64, 'ENCRYPTION_KEY must be a 64-character hex key'),
   CLIENT_URL: z.string().url().default('http://localhost:5173'),
-  BCRYPT_SALT_ROUNDS: z.coerce.number().int().min(10).max(15).default(12)
+  BCRYPT_SALT_ROUNDS: z.coerce.number().int().min(10).max(15).default(12),
+  GEMINI_API_KEY: z.string().optional(),
+  VIRUSTOTAL_API_KEY: z.string().optional(),
+  ABUSEIPDB_API_KEY: z.string().optional()
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

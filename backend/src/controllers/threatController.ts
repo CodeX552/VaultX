@@ -2,6 +2,7 @@ import { type Request, type Response } from 'express';
 import { prisma } from '../database/prisma';
 import { AppError } from '../middleware/errorHandler';
 import { env } from '../config/env';
+import { GoogleGenAI } from '@google/genai';
 
 export const getThreats = async (req: Request, res: Response) => {
   if (!req.auth?.userId) {
@@ -118,21 +119,50 @@ export const analyzeThreatWithAI = async (req: Request, res: Response) => {
     throw new AppError('Alert not found', 404);
   }
 
-  // Mocking AI Assistant Response
-  // In a real application, you would pass `alert.payload` and `alert.attackType` to an LLM via OpenAI or Gemini SDK.
-  
-  const mockAiResponse = {
-    analysis: `The attacker attempted a ${alert.attackType} attack targeting ${alert.url}. The payload suggests they were trying to bypass authentication or execute unauthorized commands.`,
-    mitreTechnique: alert.mitreId,
-    confidence: '95%',
-    recommendation: 'Ensure strict input validation and parameterized queries. Implement IP rate limiting for the source IP.',
-    remediation: [
-      `Block IP address ${alert.ip} at the firewall level.`,
-      'Review web application firewall (WAF) rules to ensure this signature is permanently blocked.',
-      'Audit the application logs to ensure no prior successful exploitation occurred from this IP.'
-    ]
-  };
+  if (!process.env.GEMINI_API_KEY) {
+    throw new AppError('GEMINI_API_KEY is not configured', 500);
+  }
 
-  res.status(200).json({ success: true, analysis: mockAiResponse });
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    
+    const prompt = `
+      Analyze the following security alert:
+      Attack Type: ${alert.attackType}
+      URL: ${alert.url}
+      Payload: ${alert.payload}
+      Method: ${alert.method}
+      Severity: ${alert.severity}
+      
+      Respond with a JSON object in exactly this format without markdown formatting or code blocks:
+      {
+        "analysis": "A brief explanation of what the attacker was trying to do.",
+        "mitreTechnique": "The applicable MITRE ATT&CK ID (e.g. T1190)",
+        "confidence": "A percentage (e.g. 95%)",
+        "recommendation": "A single sentence recommendation for immediate action.",
+        "remediation": [
+          "Step 1 to fix the vulnerability permanently",
+          "Step 2",
+          "Step 3"
+        ]
+      }
+    `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json"
+      }
+    });
+
+    const aiText = response.text || "{}";
+    const aiResponse = JSON.parse(aiText);
+
+    res.status(200).json({ success: true, analysis: aiResponse });
+  } catch (error) {
+    console.error("AI Analysis Failed:", error);
+    throw new AppError('Failed to analyze threat with AI', 500);
+  }
 };
 
